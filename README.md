@@ -1,0 +1,4 @@
+SweetieBot
+==========
+
+IRC Bot
