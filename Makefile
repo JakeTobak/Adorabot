@@ -1,9 +1,9 @@
 CC=g++
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=src/main.cpp src/SweetieBot.cpp
+SOURCES=src/main.cpp src/Adorabot.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=sweetiebot
+EXECUTABLE=Adorabot
 
 all: $(SOURCES) $(EXECUTABLE)
 	mv src/*.o tmp/

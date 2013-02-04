@@ -1,11 +1,11 @@
 /*
- * SweetieBot.cpp
+ * Adorabot.cpp
  *
  *  Created on: 15 Jul 2011
  *      Author: Tyler Allen
  */
  
-#include "SweetieBot.h"
+#include "Adorabot.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,23 +22,30 @@
 #include <time.h>
 #include <mysql/mysql.h>
 #include <curl/curl.h>
+#include "User.h"
 
 using namespace std;
  
 #define MAXDATASIZE 100
  
-SweetieBot::SweetieBot(char * _nick, char * _usr)
+Adorabot::Adorabot(char * _nick, char * _usr)
 {
     nick = _nick;
     usr = _usr;
 }
+
+Adorabot::Adorabot(User* _user)
+{
+    nick = _user->getNick();
+    usr = _user->getIdent();
+}
  
-SweetieBot::~SweetieBot()
+Adorabot::~Adorabot()
 {
     close (s);
 }
  
-void SweetieBot::start()
+void Adorabot::start()
 {
     struct addrinfo hints, *servinfo;
  
@@ -91,12 +98,12 @@ void SweetieBot::start()
         switch (count) {
             case 3:
                     //after 3 recives send data to server (as per IRC protacol)
-                    sendData(nick);
-                    sendData(usr);
+                    sendData("NICK "+nick+"\r\n");
+                    sendData("USER "+usr+" 8 * :"+usr+"\r\n");
                 break;
             case 4:
                     //Join a channel after we connect, this time we choose beaker
-                sendData("JOIN #SweetieBot\r\n");
+                sendData("JOIN #Adorabot\r\n");
             default:
                 break;
         }
@@ -131,7 +138,7 @@ void SweetieBot::start()
     }
 }
  
-bool SweetieBot::charSearch(char *toSearch, char *searchFor)
+bool Adorabot::charSearch(char *toSearch, char *searchFor)
 {
     int len = strlen(toSearch);
     int forLen = strlen(searchFor); // The length of the searchfor field
@@ -161,7 +168,7 @@ bool SweetieBot::charSearch(char *toSearch, char *searchFor)
     return 0;
 }
  
-bool SweetieBot::isConnected(char *buf)
+bool Adorabot::isConnected(char *buf)
 {//returns true if "/MOTD" is found in the input strin
     //If we find /MOTD then its ok join a channel
     if (charSearch(buf,"/MOTD") == true)
@@ -170,7 +177,7 @@ bool SweetieBot::isConnected(char *buf)
         return false;
 }
  
-char * SweetieBot::timeNow()
+char * Adorabot::timeNow()
 {//returns the current date and time
     time_t rawtime;
     struct tm * timeinfo;
@@ -181,7 +188,7 @@ char * SweetieBot::timeNow()
     return asctime (timeinfo);
 }
  
-bool SweetieBot::sendData(char *msg)
+bool Adorabot::sendData(char *msg)
 {//Send some data
     //Send some data
     int len = strlen(msg);
@@ -193,7 +200,7 @@ bool SweetieBot::sendData(char *msg)
         return true;
 }
  
-void SweetieBot::sendPong(char *buf)
+void Adorabot::sendPong(char *buf)
 {
     //Get the reply address
     //loop through bug and find the location of PING
@@ -255,7 +262,7 @@ void SweetieBot::sendPong(char *buf)
  
 }
  
-void SweetieBot::msgHandel(char * buf)
+void Adorabot::msgHandel(char * buf)
 {
     /*
      * TODO: add you code to respod to commands here

@@ -1,7 +1,9 @@
-#include "SweetieBot.h"
+#include "Adorabot.h"
+#include "User.h"
 
 int main() {
-	SweetieBot myBot = SweetieBot("NICK SweetieBot\r\n","USER botSweetie 8 * :SweetieBot\r\n");
+	User* user = new User("Adorabot", "Adorabot")
+	Adorabot myBot = Adorabot("NICK Adorabot\r\n","USER Adorabot 8 * :Adorabot\r\n");
 	myBot.start();
 	return 0;
 }
