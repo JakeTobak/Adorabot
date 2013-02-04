@@ -1,4 +1,4 @@
-#include "sweetiebot.h"
+#include "SweetieBot.h"
 
 int main() {
 	SweetieBot myBot = SweetieBot("NICK SweetieBot\r\n","USER botSweetie 8 * :SweetieBot\r\n");

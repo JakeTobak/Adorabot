@@ -9,13 +9,13 @@ all: $(SOURCES) $(EXECUTABLE)
 	mv src/*.o tmp/
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@
+	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl
 
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@ -lcurl
 
 clean:
-	rm -rf tmp/*
+	rm -rf tmp/*.o
 
 remove:
 	rm -rf tmp/*.o

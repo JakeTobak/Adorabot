@@ -20,9 +20,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-#include "/usr/local/mysql/include/mysql.h"
+#include <mysql/mysql.h>
 #include <curl/curl.h>
-#include <libxml/parser.h>
 
 using namespace std;
  
@@ -265,7 +264,26 @@ void SweetieBot::msgHandel(char * buf)
      string* msg = new string(buf);
     if (msg->find("?test") != -1)
     {
-        sendData("PRIVMSG #ecsig :no, u\r\n");
+//        sendData("PRIVMSG #ecsig :no, u\r\n");
+	CURL *curl;
+  CURLcode res;
+ 
+  curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "http://ecsig.com");
+    /* example.com is redirected, so we tell libcurl to follow redirection */ 
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+ 
+    /* Perform the request, res will get the return code */ 
+    res = curl_easy_perform(curl);
+    /* Check for errors */ 
+    if(res != CURLE_OK)
+      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+              curl_easy_strerror(res));
+ 
+    /* always cleanup */ 
+    curl_easy_cleanup(curl);
+  }
     }
  
 }
