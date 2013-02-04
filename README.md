@@ -1,5 +1,5 @@
-SweetieBot
-==========
+Adorabot
+========
 
 IRC Bot
 
