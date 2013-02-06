@@ -12,7 +12,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl -lboost_regex
 
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@ -lcurl
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	rm -rf tmp/*.o
