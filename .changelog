@@ -1,0 +1,10 @@
+2013-02-06
+==========
+Bot can:
+-> Connect to server
+-> Send messages
+-> Receive messages 1 line at a time
+-> Respond to PING
+-> Parse messages for "from", "command" and "args".
+-> Join/Part commands are hardcoded
+-> Server info and bot nick are hardcoded
