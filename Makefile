@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall -og
 LDFLAGS=
-SOURCES=src/main.cpp src/Adorabot.cpp src/User.cpp
+SOURCES=src/main.cpp src/Adorabot.cpp src/User.cpp src/Message.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Adorabot
 
