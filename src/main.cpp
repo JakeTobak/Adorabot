@@ -1,9 +1,11 @@
 #include "Adorabot.h"
 #include "User.h"
 
+using namespace std;
+
 int main() {
-	User* user = new User("Adorabot", "Adorabot")
-	Adorabot myBot = Adorabot("NICK Adorabot\r\n","USER Adorabot 8 * :Adorabot\r\n");
-	myBot.start();
+	User* user = new User((char*)"Adorabot", (char*)"Adorabot");
+	Adorabot* myBot = new Adorabot(user);
+	myBot->start();
 	return 0;
 }

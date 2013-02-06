@@ -1,32 +1,27 @@
 #ifndef _ADORABOT_H_
 #define _ADORABOT_H_
- 
-class Adorabot
-{
+#include "User.h"
+class Adorabot {
 public:
-    Adorabot(char * _nick, char * _usr);
     Adorabot(User* _user);
     virtual ~Adorabot();
  
-    bool setup;
-
     void start();
-    bool charSearch(char *toSearch, char *searchFor);
+    void stop();
  
 private:
-    char *port;
-    int s; //the socket descriptor
+    char* port_;
+    int socket_; //the socket descriptor
+    bool connected_;
  
-    char *nick;
-    char *usr;
- 
-    User* user;
+    User* user_;
 
-    bool isConnected(char *buf);
-    char * timeNow();
-    bool sendData(char *msg);
-    void sendPong(char *buf);
-    void msgHandel(char *buf);
+    bool isConnected();
+    void onConnect();
+    bool sendData(char* _msg);
+    bool sendData(std::string* _msg);
+
+    void onReceive(char* _buf);
 };
  
 #endif

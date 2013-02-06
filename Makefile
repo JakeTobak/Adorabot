@@ -1,7 +1,7 @@
 CC=g++
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -og
 LDFLAGS=
-SOURCES=src/main.cpp src/Adorabot.cpp
+SOURCES=src/main.cpp src/Adorabot.cpp src/User.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Adorabot
 
@@ -9,7 +9,7 @@ all: $(SOURCES) $(EXECUTABLE)
 	mv src/*.o tmp/
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl
+	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl -lboost_regex
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@ -lcurl

@@ -1,11 +1,9 @@
 /*
  * Adorabot.cpp
- *
- *  Created on: 15 Jul 2011
- *      Author: Tyler Allen
  */
  
 #include "Adorabot.h"
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,37 +20,30 @@
 #include <time.h>
 #include <mysql/mysql.h>
 #include <curl/curl.h>
+#include <boost/regex.hpp>
+
+#include "Message.h"
 #include "User.h"
 
 using namespace std;
  
-#define MAXDATASIZE 100
- 
-Adorabot::Adorabot(char * _nick, char * _usr)
-{
-    nick = _nick;
-    usr = _usr;
-}
+#define MAXDATASIZE 1024
 
 Adorabot::Adorabot(User* _user)
 {
-    nick = _user->getNick();
-    usr = _user->getIdent();
+    user_ = _user;
 }
  
 Adorabot::~Adorabot()
 {
-    close (s);
+    close (socket_);
 }
  
 void Adorabot::start()
 {
     struct addrinfo hints, *servinfo;
- 
-    //Setup run with no errors
-    setup = true;
- 
-    port = "6667";
+
+    port_ = (char*)"6667";
  
     //Ensure that servinfo is clear
     memset(&hints, 0, sizeof hints); // make sure the struct is empty
@@ -63,22 +54,21 @@ void Adorabot::start()
  
     //Setup the structs if error print why
     int res;
-    if ((res = getaddrinfo("irc.ecsig.com",port,&hints,&servinfo)) != 0)
+    if ((res = getaddrinfo("irc.ecsig.com",port_,&hints,&servinfo)) != 0)
     {
-        setup = false;
         fprintf(stderr,"getaddrinfo: %s\n", gai_strerror(res));
     }
  
     //setup the socket
-    if ((s = socket(servinfo->ai_family,servinfo->ai_socktype,servinfo->ai_protocol)) == -1)
+    if ((socket_ = socket(servinfo->ai_family,servinfo->ai_socktype,servinfo->ai_protocol)) == -1)
     {
         perror("client: socket");
     }
  
     //Connect
-    if (connect(s,servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+    if (connect(socket_,servinfo->ai_addr, servinfo->ai_addrlen) == -1)
     {
-        close (s);
+        close (socket_);
         perror("Client Connect");
     }
  
@@ -88,209 +78,165 @@ void Adorabot::start()
     //Recv some data
     int numbytes;
     char buf[MAXDATASIZE];
- 
     int count = 0;
-    while (1)
-    {
-        //declars
-        count++;
- 
-        switch (count) {
-            case 3:
-                    //after 3 recives send data to server (as per IRC protacol)
-                    sendData("NICK "+nick+"\r\n");
-                    sendData("USER "+usr+" 8 * :"+usr+"\r\n");
-                break;
-            case 4:
-                    //Join a channel after we connect, this time we choose beaker
-                sendData("JOIN #Adorabot\r\n");
-            default:
-                break;
+    while (1) {
+        memset(buf,'\0',MAXDATASIZE);
+        
+        if(count<3) {
+            count++;
+     
+            if(count == 3) {
+                char nickmsg[100];
+                strcpy(nickmsg,"NICK ");
+                strcat(nickmsg,user_->getNick()->c_str());
+                strcat(nickmsg,"\r\n");
+                sendData(nickmsg);
+
+                char usermsg[100];
+                strcpy(usermsg,"USER ");
+                strcat(usermsg,user_->getIdent()->c_str());
+                strcat(usermsg," 8 * :");
+                strcat(usermsg,user_->getIdent()->c_str());
+                strcat(usermsg,"\r\n");
+                sendData(usermsg);
+            }
         }
- 
         //Recv & print Data
-        numbytes = recv(s,buf,MAXDATASIZE-1,0);
-        buf[numbytes]='\0';
-        cout << buf;
-        //buf is the data that is recived
- 
-        //Pass buf to the message handeler
-        msgHandel(buf);
- 
-        //If Ping Recived
-        /*
-         * must reply to ping overwise connection will be closed
-         * see http://www.irchelp.org/irchelp/rfc/chapter4.html
-         */
-        if (charSearch(buf,"PING"))
-        {
-            sendPong(buf);
+        char temp[1];
+        for(int i=0; i<MAXDATASIZE-1; i++) {
+            numbytes = recv(socket_,temp,1,0);
+            buf[i] = temp[0];
+            buf[i+1] = '\0';
+            if(i > 1 && buf[i-1] == '\r' && buf[i] == '\n') {
+                i = MAXDATASIZE;
+            }
         }
+        
+        onReceive(buf);
+
+        //ALWAYS RESPOND TO PINGS
+        if (buf[0] == 'P' && buf[1] == 'I' && buf[2] == 'N' && buf[3] == 'G') {
+            buf[1] = 'O';
+            sendData(buf);
+        }
+
+        
+
  
         //break if connection closed
-        if (numbytes==0)
-        {
+        if (numbytes==0) {
             cout << "----------------------CONNECTION CLOSED---------------------------"<< endl;
-            cout << timeNow() << endl;
- 
             break;
         }
     }
 }
- 
-bool Adorabot::charSearch(char *toSearch, char *searchFor)
-{
-    int len = strlen(toSearch);
-    int forLen = strlen(searchFor); // The length of the searchfor field
- 
-    //Search through each char in toSearch
-    for (int i = 0; i < len;i++)
-    {
-        //If the active char is equil to the first search item then search toSearch
-        if (searchFor[0] == toSearch[i])
-        {
-            bool found = true;
-            //search the char array for search field
-            for (int x = 1; x < forLen; x++)
-            {
-                if (toSearch[i+x]!=searchFor[x])
-                {
-                    found = false;
-                }
-            }
- 
-            //if found return true;
-            if (found == true)
-                return true;
-        }
-    }
- 
-    return 0;
+
+void Adorabot::stop() {
+    sendData((char*)"QUIT stop() called");
+    close(socket_);
 }
  
-bool Adorabot::isConnected(char *buf)
-{//returns true if "/MOTD" is found in the input strin
-    //If we find /MOTD then its ok join a channel
-    if (charSearch(buf,"/MOTD") == true)
-        return true;
-    else
-        return false;
+bool Adorabot::isConnected() {
+    return connected_;
 }
- 
-char * Adorabot::timeNow()
-{//returns the current date and time
-    time_t rawtime;
-    struct tm * timeinfo;
- 
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
- 
-    return asctime (timeinfo);
-}
- 
-bool Adorabot::sendData(char *msg)
-{//Send some data
-    //Send some data
-    int len = strlen(msg);
-    int bytes_sent = send(s,msg,len,0);
- 
+
+bool Adorabot::sendData(char* _msg) {
+    cout << _msg << endl;
+    int len = strlen(_msg);
+    int bytes_sent = send(socket_,_msg,len,0);
     if (bytes_sent == 0)
         return false;
     else
         return true;
 }
- 
-void Adorabot::sendPong(char *buf)
-{
-    //Get the reply address
-    //loop through bug and find the location of PING
-    //Search through each char in toSearch
- 
-    char * toSearch = "PING ";
- 
-    for (int i = 0; i < strlen(buf);i++)
-        {
-            //If the active char is equil to the first search item then search toSearch
-            if (buf[i] == toSearch[0])
-            {
-                bool found = true;
-                //search the char array for search field
-                for (int x = 1; x < 4; x++)
-                {
-                    if (buf[i+x]!=toSearch[x])
-                    {
-                        found = false;
-                    }
-                }
- 
-                //if found return true;
-                if (found == true)
-                {
-                    int count = 0;
-                    //Count the chars
-                    for (int x = (i+strlen(toSearch)); x < strlen(buf);x++)
-                    {
-                        count++;
-                    }
- 
-                    //Create the new char array
-                    char returnHost[count + 5];
-                    returnHost[0]='P';
-                    returnHost[1]='O';
-                    returnHost[2]='N';
-                    returnHost[3]='G';
-                    returnHost[4]=' ';
- 
-                    count = 0;
-                    //set the hostname data
-                    for (int x = (i+strlen(toSearch)); x < strlen(buf);x++)
-                    {
-                        returnHost[count+5]=buf[x];
-                        count++;
-                    }
- 
-                    //send the pong
-                    if (sendData(returnHost))
-                    {
-                        cout << timeNow() <<"  Ping Pong" << endl;
-                    }
- 
-                    return;
-                }
-            }
-        }
- 
+
+bool Adorabot::sendData(std::string* _msg) {
+    int len = strlen(_msg->c_str());
+    char mymessage[len];
+    strcpy(mymessage,_msg->c_str());
+    return sendData(mymessage);
 }
  
-void Adorabot::msgHandel(char * buf)
-{
-    /*
-     * TODO: add you code to respod to commands here
-     * the example below replys to the command hi scooby
-     */
-     string* msg = new string(buf);
-    if (msg->find("?test") != -1)
-    {
-//        sendData("PRIVMSG #ecsig :no, u\r\n");
-	CURL *curl;
-  CURLcode res;
- 
-  curl = curl_easy_init();
-  if(curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, "http://ecsig.com");
-    /* example.com is redirected, so we tell libcurl to follow redirection */ 
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
- 
-    /* Perform the request, res will get the return code */ 
-    res = curl_easy_perform(curl);
-    /* Check for errors */ 
-    if(res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
- 
-    /* always cleanup */ 
-    curl_easy_cleanup(curl);
-  }
+void Adorabot::onConnect() {
+    sendData((char*)"JOIN #Adorabot\r\n");
+}
+
+void Adorabot::onReceive(char* _buf) {
+    string* msg = new string(_buf);
+    string* response = NULL;
+
+    if(!connected_ && (int)(msg->find("/MOTD")) != -1) {
+        connected_ = true;
+        onConnect();
     }
- 
+
+    cout << *msg;
+
+    boost::regex rexp(".* PRIVMSG (#?\\w*) :([\\?\\w]*) ?(.*)\r?\n?");
+    boost::smatch matches;
+    boost::regex_search(*msg,matches,rexp);
+    
+    string all(matches[0].first,matches[0].second);
+    string from(matches[1].first,matches[1].second);
+    string command(matches[2].first,matches[2].second);
+    string args(matches[3].first,matches[3].second);
+
+    if(command.compare("?join") == 0) {
+        string cmdraw("JOIN ");
+        cmdraw += args.c_str();
+        cmdraw += "\r\n";
+        sendData(&cmdraw);
+    }
+    else if(command.compare("?part") == 0) {
+        char cmdraw[100];
+        strcpy(cmdraw,"PART ");
+        strcat(cmdraw,args.c_str());
+        strcat(cmdraw,"\r\n");
+                    
+        response = new string(cmdraw);
+        sendData(response);
+    }
+    else if((int)(all.find(":Who's adorable")) != -1) {
+        response = new string("PRIVMSG ");
+        *response += from.c_str();
+        *response += " :\\(^o^)/ I am! \r\n";
+        sendData(response);
+    }
+
+    delete msg;
+    delete response;
 }
+
+
+
+
+
+
+
+
+
+
+
+    // if (msg->find("?test") != -1)
+    // {
+//        sendData("PRIVMSG #ecsig :no, u\r\n");
+    // CURL *curl;
+ //  CURLcode res;
+ 
+ //  curl = curl_easy_init();
+ //  if(curl) {
+ //    curl_easy_setopt(curl, CURLOPT_URL, "http://ecsig.com");
+ //    /* example.com is redirected, so we tell libcurl to follow redirection */ 
+ //    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+ 
+ //     Perform the request, res will get the return code  
+ //    res = curl_easy_perform(curl);
+ //    /* Check for errors */ 
+ //    if(res != CURLE_OK)
+ //      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+ //              curl_easy_strerror(res));
+ 
+ //    /* always cleanup */ 
+ //    curl_easy_cleanup(curl);
+ //  }
+    //}
