@@ -6,9 +6,11 @@ OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Adorabot
 
 all: $(SOURCES) $(EXECUTABLE)
+	mkdir -p tmp/
 	mv src/*.o tmp/
 
 $(EXECUTABLE): $(OBJECTS)
+	mkdir -p bin/
 	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl -lboost_regex
 
 .cpp.o:
@@ -18,5 +20,5 @@ clean:
 	rm -rf tmp/*.o
 
 remove:
-	rm -rf tmp/*.o
-	rm -rf bin/$(EXECUTABLE)
+	rm -rf tmp/
+	rm -rf bin/
