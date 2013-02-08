@@ -1,3 +1,11 @@
+2013-02-07
+==========
+-> Restructed the directories a bit
+-> Added a conf file for nick/server
+-> Added color to standard out;
+-> Changed all char arrays to strings.
+-> Cleaned up a bunch of stuff
+
 2013-02-06
 ==========
 Bot can:
