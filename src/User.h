@@ -1,18 +1,18 @@
 #ifndef _USER_H_
 #define _USER_H_
 #include <string>
-#include <string.h>
+
 class User {
 public:
-	User(char* _nick);
-	User(char* _nick, char* _ident);
-    User(char* _nick, char* _ident, char* _realname);
+	User(std::string _nick);
+	User(std::string _nick, std::string _ident);
+    User(std::string _nick, std::string _ident, std::string _realname);
     virtual ~User();
 
-    void setNick(char* _nick);
-    void setIdent(char* _ident);
-    void setRealname(char* _realname);
-    void setHostmask(char* hostmask);
+    void setNick(std::string _nick);
+    void setIdent(std::string _ident);
+    void setRealname(std::string _realname);
+    void setHostmask(std::string hostmask);
 
     std::string* getNick();
     std::string* getIdent();
@@ -20,10 +20,10 @@ public:
     std::string* getHostmask();
  
 private:
-    std::string* nick;
-    std::string* ident;
-    std::string* realname;
-    std::string* hostmask;
+    std::string* nick_;
+    std::string* ident_;
+    std::string* realname_;
+    std::string* hostmask_;
 };
 
 #endif

@@ -1,59 +1,62 @@
 #include "User.h"
 #include <string>
-#include <string.h>
 
 using namespace std;
  
-User::User(char * _nick) {
+User::User(std::string _nick) {
     this->setNick(_nick);
     this->setIdent(_nick);
     this->setRealname(_nick);
 }
  
-User::User(char * _nick, char* _ident) {
+User::User(std::string _nick, std::string _ident) {
     this->setNick(_nick);
     this->setIdent(_ident);
-    this->setRealname(_nick);
+    this->setRealname(_ident);
 }
 
-User::User(char * _nick, char* _ident, char* _realname) {
+User::User(std::string _nick, std::string _ident, std::string _realname) {
     this->setNick(_nick);
     this->setIdent(_ident);
     this->setRealname(_realname);
 }
 
 User::~User() {
+    delete nick_;
+    delete ident_;
+    delete realname_;
+    delete hostmask_;
 }
 
-void User::setNick(char* _nick) {
-	nick = new string(_nick);
+void User::setNick(std::string _nick) {
+	nick_ = new string(_nick);
 }
 
-void User::setIdent(char* _ident) {
-	ident = new string(_ident);
+void User::setIdent(std::string _ident) {
+	ident_ = new string(_ident);
 }
 
-void User::setRealname(char* _realname) {
-	realname = new string(_realname);
+void User::setRealname(std::string _realname) {
+	realname_ = new string(_realname);
 }
 
-void User::setHostmask(char* _hostmask) {
-	hostmask = new string(_hostmask);
+void User::setHostmask(std::string _hostmask) {
+	hostmask_ = new string(_hostmask);
 }
 
 string* User::getNick() {
-	return nick;
+	return nick_;
 }
 
 string* User::getIdent() {
-	return ident;
+	return ident_;
 }
 
 string* User::getRealname() {
-	return realname;
+	return realname_;
 }
 
 string* User::getHostmask() {
-	return hostmask;
+	return hostmask_;
 }
 

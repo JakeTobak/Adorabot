@@ -10,8 +10,7 @@ all: $(SOURCES) $(EXECUTABLE)
 	mv src/*.o tmp/
 
 $(EXECUTABLE): $(OBJECTS)
-	mkdir -p bin/
-	$(CC) $(LDFLAGS) $(OBJECTS) -o bin/$@ -lcurl -lboost_regex
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lcurl -lboost_regex -lboost_program_options
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
@@ -21,4 +20,4 @@ clean:
 
 remove:
 	rm -rf tmp/
-	rm -rf bin/
+	rm -f $(EXECUTABLE)

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -24,10 +25,12 @@
 
 #include "Message.h"
 #include "User.h"
+#include "ansi.h"
 
 using namespace std;
  
 #define MAXDATASIZE 1024
+#define PING 1346981447
 
 Adorabot::Adorabot(User* _user)
 {
@@ -39,11 +42,11 @@ Adorabot::~Adorabot()
     close (socket_);
 }
  
-void Adorabot::start()
+void Adorabot::start(std::string _server, std::string _port)
 {
     struct addrinfo hints, *servinfo;
-
-    port_ = (char*)"6667";
+    port_   = &_port;
+    server_ = &_server;
  
     //Ensure that servinfo is clear
     memset(&hints, 0, sizeof hints); // make sure the struct is empty
@@ -54,7 +57,7 @@ void Adorabot::start()
  
     //Setup the structs if error print why
     int res;
-    if ((res = getaddrinfo("irc.ecsig.com",port_,&hints,&servinfo)) != 0)
+    if ((res = getaddrinfo(server_->c_str(),port_->c_str(),&hints,&servinfo)) != 0)
     {
         fprintf(stderr,"getaddrinfo: %s\n", gai_strerror(res));
     }
@@ -84,20 +87,18 @@ void Adorabot::start()
         
         if(count<3) {
             count++;
-     
+            
             if(count == 3) {
-                char nickmsg[100];
-                strcpy(nickmsg,"NICK ");
-                strcat(nickmsg,user_->getNick()->c_str());
-                strcat(nickmsg,"\r\n");
+                std::string nickmsg("NICK ");
+                    nickmsg += *(user_->getNick());
+                    nickmsg += "\r\n";
                 sendData(nickmsg);
 
-                char usermsg[100];
-                strcpy(usermsg,"USER ");
-                strcat(usermsg,user_->getIdent()->c_str());
-                strcat(usermsg," 8 * :");
-                strcat(usermsg,user_->getIdent()->c_str());
-                strcat(usermsg,"\r\n");
+                std::string usermsg("USER ");
+                    usermsg += *(user_->getIdent());
+                    usermsg += " 8 * :";
+                    usermsg += *(user_->getIdent());
+                    usermsg += "\r\n";
                 sendData(usermsg);
             }
         }
@@ -107,18 +108,23 @@ void Adorabot::start()
             numbytes = recv(socket_,temp,1,0);
             buf[i] = temp[0];
             buf[i+1] = '\0';
-            if(i > 1 && buf[i-1] == '\r' && buf[i] == '\n') {
+            if(i > 0 && buf[i-1] == '\r' && buf[i] == '\n') {
                 i = MAXDATASIZE;
             }
         }
         
-        onReceive(buf);
-
         //ALWAYS RESPOND TO PINGS
-        if (buf[0] == 'P' && buf[1] == 'I' && buf[2] == 'N' && buf[3] == 'G') {
+        if (((int32_t*)buf)[0] == 1196312912) {
             buf[1] = 'O';
-            sendData(buf);
+            in_ = new string(buf);
+            sendData(in_);
         }
+
+        in_ = new string(buf);
+        
+        onReceive(*in_);
+
+        
 
         
 
@@ -132,50 +138,65 @@ void Adorabot::start()
 }
 
 void Adorabot::stop() {
-    sendData((char*)"QUIT stop() called");
-    close(socket_);
+    quit("stop() called");
+    exit(0);
+}
+
+void Adorabot::quit(std::string _msg) {
+    sendData("QUIT " + _msg + "\r\n");
 }
  
 bool Adorabot::isConnected() {
     return connected_;
 }
 
-bool Adorabot::sendData(char* _msg) {
-    cout << _msg << endl;
-    int len = strlen(_msg);
-    int bytes_sent = send(socket_,_msg,len,0);
+bool Adorabot::sendData(std::string* _msg) {
+
+    cout << ANSIRED << ANSIBOLD << *_msg << ANSIRESET;
+    // cout << "\x1b[31;1m" << *_msg << "\x1b[0m" << endl;
+
+    //Send the message and see how many bytes were sent
+    int bytes_sent = send(socket_,_msg->c_str(),_msg->length(),0);
+
+    //IRC Protocol is supposed to silently ignore empty messages
+    //so sending an extra \r\n won't hurt if the string already
+    //had it, but if it didn't, then it will be sent here.
+    send(socket_,"\r\n",2,0);
+
+    //If no bytes were sent, then we had a problem...
     if (bytes_sent == 0)
         return false;
     else
         return true;
 }
 
-bool Adorabot::sendData(std::string* _msg) {
-    int len = strlen(_msg->c_str());
-    char mymessage[len];
-    strcpy(mymessage,_msg->c_str());
-    return sendData(mymessage);
+bool Adorabot::sendData(std::string _msg) {
+    return sendData(&_msg);
 }
  
 void Adorabot::onConnect() {
-    sendData((char*)"JOIN #Adorabot\r\n");
+    sendData("JOIN #Adorabot\r\n");
 }
 
-void Adorabot::onReceive(char* _buf) {
+void Adorabot::onReceive(std::string _buf) {
     string* msg = new string(_buf);
     string* response = NULL;
-
     if(!connected_ && (int)(msg->find("/MOTD")) != -1) {
         connected_ = true;
         onConnect();
     }
 
-    cout << *msg;
+    
 
     boost::regex rexp(".* PRIVMSG (#?\\w*) :([\\?\\w]*) ?(.*)\r?\n?");
     boost::smatch matches;
     boost::regex_search(*msg,matches,rexp);
     
+    if(matches[0].matched) {
+        cout << ANSIGREEN << ANSIBOLD;
+    }
+    cout << *msg << ANSIRESET;
+
     string all(matches[0].first,matches[0].second);
     string from(matches[1].first,matches[1].second);
     string command(matches[2].first,matches[2].second);
@@ -185,7 +206,10 @@ void Adorabot::onReceive(char* _buf) {
         string cmdraw("JOIN ");
         cmdraw += args.c_str();
         cmdraw += "\r\n";
-        sendData(&cmdraw);
+        sendData(cmdraw);
+    }
+    else if(command.compare("?kill") == 0) {
+        this->Adorabot::stop();
     }
     else if(command.compare("?part") == 0) {
         char cmdraw[100];
