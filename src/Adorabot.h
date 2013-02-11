@@ -4,7 +4,7 @@
 #include <string.h>
 #include "Parser.h"
 #include "Bot.h"
-
+#include "debug.h"
 
 class Adorabot : public virtual Bot {
 public:

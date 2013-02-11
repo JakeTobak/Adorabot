@@ -2,6 +2,7 @@
 #define _PARSER_H_
 
 #include <string>
+#include "debug.h"
 
 class Parser {
 public:

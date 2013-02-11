@@ -4,9 +4,10 @@
 #include "Parser.h"
 #include "Server.h"
 #include "Connection.h"
-
+#include <pthread.h>
+#include "debug.h"
 class Connection;
-class Bot;
+class Bot; 
 
 class User : public virtual Parser {
 public:
@@ -25,6 +26,7 @@ public:
     void setUserid(int _id);
     void setServer(Server * _server);
     void setBot(Bot* _bot);
+    void setThread(pthread_t & _thread);
 
     std::string* getNick();
     std::string* getIdent();
@@ -32,6 +34,7 @@ public:
     std::string* getHostmask();
     Server * getServer();
     int getUserid();
+    pthread_t* getThread();
 
 private:
     std::string * nick_;
@@ -42,6 +45,7 @@ private:
     Connection * connection_;
     int userid_;
     Bot * bot_;
+    pthread_t * thread_;
 };
 
 #endif

@@ -23,7 +23,6 @@
 #include <curl/curl.h>
 #include <boost/regex.hpp>
 
-#include "Message.h"
 #include "User.h"
 #include "ansi.h"
 
@@ -46,7 +45,7 @@ bool Adorabot::isConnected() {
     return connected_;
 }
 
-std::string Adorabot::parse(const std::string & _message) {
+std::string Adorabot::parse(std::string const& _message) {
    std::string response("");
 
     if(!connected_ && (int)(_message.find("MOTD")) != -1) {

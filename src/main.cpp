@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "User.h"
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -10,8 +11,13 @@
 
 #include "Adorabot.h"
 
+
 using namespace std;
 namespace po = boost::program_options;
+
+void* startUserThread(void* _user) {
+  ((User*)_user)->start();
+}
 
 int main() {
 
@@ -58,7 +64,8 @@ int main() {
         users[i]->setUserid(results[i]["user_id"]);
         users[i]->setServer(new Server((string)results[i]["address"], (string)results[i]["port"], (results[i]["ssl"] == "1")));
         users[i]->setBot(new Adorabot());
-        users[i]->start();
+        pthread_create( users[i]->getThread(), NULL, startUserThread, (void*) users[i]);
+        //users[i]->start();
         cout << "\t\tUser Object: " << users[i]->getUserid() << " - " << *(users[i]->getNick()) << "@" << *(users[i]->getIdent()) << endl;
 
       }
@@ -72,7 +79,9 @@ int main() {
   }
 
 
-
+for(size_t i=0; i<users.size(); i++) {
+  pthread_join( *(users[i]->getThread()), NULL);
+}
 
 
 

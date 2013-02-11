@@ -1,6 +1,6 @@
 #ifndef _ANSI_H_
 #define _ANSI_H_
-
+#include "debug.h"
 #define ANSIBLACK      "\x1b[30m"
 #define ANSIRED        "\x1b[31m"
 #define ANSIGREEN      "\x1b[32m"

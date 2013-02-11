@@ -6,6 +6,7 @@
 #include "Parser.h"
 #include "Server.h"
 #include "User.h"
+#include "debug.h"
 
 class User;
 

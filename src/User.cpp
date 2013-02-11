@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "Bot.h"
 #include "Adorabot.h"
+#include <pthread.h>
 
 using namespace std;
  
@@ -73,6 +74,14 @@ void User::setServer(Server * _server) {
 
 void User::setBot(Bot* _bot) {
     bot_ = _bot;
+}
+
+void User::setThread(pthread_t & _thread) {
+    thread_ = &_thread;
+}
+
+pthread_t* User::getThread() {
+    return thread_;
 }
 
 string* User::getNick() {

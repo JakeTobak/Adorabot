@@ -20,6 +20,7 @@
 #include "User.h"
 #include "Server.h"
 #include "ansi.h"
+#include "MessageFactory.h"
 
 #define MAXDATASIZE 1024
 #define PING 1346981447
@@ -99,6 +100,8 @@ void Connection::start() {
         }
         
         in_ = new string(buf);
+        
+        cout << *(MessageFactory::makeMessage(*in_)) << endl;
 
         //ALWAYS RESPOND TO PINGS
         if (((int32_t*)buf)[0] == 1196312912) {
