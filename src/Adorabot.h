@@ -2,13 +2,17 @@
 #define _ADORABOT_H_
 #include "User.h"
 #include <string.h>
-class Adorabot {
+#include "Parser.h"
+#include "Bot.h"
+
+
+class Adorabot : public virtual Bot {
 public:
-    Adorabot(User* _user);
-    virtual ~Adorabot();
+    Adorabot();
+    ~Adorabot();
  
-    void start(std::string _server, std::string _port);
-    void stop();
+    std::string parse(const std::string & _message);
+
  
 private:
     std::string* server_;
@@ -21,11 +25,6 @@ private:
     std::string* in_;
 
     bool isConnected();
-    void onConnect();
-    bool sendData(std::string _msg);
-    bool sendData(std::string* _msg);
-
-    void onReceive(std::string _buf);
 
     void quit(std::string _msg);
 };

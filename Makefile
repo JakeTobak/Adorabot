@@ -1,7 +1,7 @@
 CC=g++
-CFLAGS=-c -Wall -og
+CFLAGS=-c -Wextra -og
 LDFLAGS=
-SOURCES=src/main.cpp src/Adorabot.cpp src/User.cpp src/Message.cpp
+SOURCES=src/main.cpp src/Parser.cpp src/Server.cpp src/Connection.cpp src/User.cpp src/Adorabot.cpp src/Bot.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Adorabot
 
@@ -10,7 +10,7 @@ all: $(SOURCES) $(EXECUTABLE)
 	mv src/*.o tmp/
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lcurl -lboost_regex -lboost_program_options
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lcurl -lboost_regex -lboost_program_options -lpthread -lmysqlpp
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@

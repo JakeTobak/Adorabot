@@ -1,5 +1,8 @@
 #include "User.h"
 #include <string>
+#include "Parser.h"
+#include "Bot.h"
+#include "Adorabot.h"
 
 using namespace std;
  
@@ -7,18 +10,24 @@ User::User(std::string _nick) {
     this->setNick(_nick);
     this->setIdent(_nick);
     this->setRealname(_nick);
+    this->setUserid(0);
+    server_ = 0;
 }
  
 User::User(std::string _nick, std::string _ident) {
     this->setNick(_nick);
     this->setIdent(_ident);
     this->setRealname(_ident);
+    this->setUserid(0);
+    server_ = 0;
 }
 
 User::User(std::string _nick, std::string _ident, std::string _realname) {
     this->setNick(_nick);
     this->setIdent(_ident);
     this->setRealname(_realname);
+    this->setUserid(0);
+    server_ = 0;
 }
 
 User::~User() {
@@ -26,6 +35,16 @@ User::~User() {
     delete ident_;
     delete realname_;
     delete hostmask_;
+    delete server_;
+}
+
+std::string User::parse(const std::string & _message) {
+   return bot_->parse(_message);
+}
+
+void User::start() {
+    connection_ = new Connection(this, server_);
+    connection_->start();
 }
 
 void User::setNick(std::string _nick) {
@@ -44,6 +63,18 @@ void User::setHostmask(std::string _hostmask) {
 	hostmask_ = new string(_hostmask);
 }
 
+void User::setUserid(int _id) {
+    userid_ = _id;
+}
+
+void User::setServer(Server * _server) {
+    server_ = _server;
+}
+
+void User::setBot(Bot* _bot) {
+    bot_ = _bot;
+}
+
 string* User::getNick() {
 	return nick_;
 }
@@ -60,3 +91,10 @@ string* User::getHostmask() {
 	return hostmask_;
 }
 
+int User::getUserid() {
+    return userid_;
+}
+
+Server* User::getServer() {
+    return server_;
+}
